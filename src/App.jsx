@@ -258,9 +258,10 @@ function App() {
                 color: '#94a3b8', borderTop: '1px solid #f1f5f9'
             }}>
                 <p>SuperCompare © 2026 — Cotizador de Supermercados de Chile</p>
-                <p style={{ marginTop: '4px', fontSize: '11px', color: '#cbd5e1' }}>
-                    Líder • Unimarc • Santa Isabel • Tottus • Acuenta
-                </p>
+                <div style={{ marginTop: '4px', fontSize: '11px', color: '#cbd5e1', display: 'flex', justifyContent: 'center', gap: '8px' }}>
+                    <span>Unimarc • Santa Isabel • Tottus • Líder • Acuenta</span>
+                    <span style={{ color: '#94a3b8' }}>| API v1.0.8</span>
+                </div>
             </footer>
         </div>
     );

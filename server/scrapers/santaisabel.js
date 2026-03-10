@@ -67,11 +67,10 @@ async function scrapeSantaIsabel(query) {
         }
 
         log(`[Santa Isabel] Encontrados ${products.length} resultados`);
-        return products;
-
-    } catch (error) {
-        log(`[Santa Isabel] Error: ${error.message}`);
-        return [];
+        return { results: products.slice(0, 15) };
+    } catch (err) {
+        log(`[Santa Isabel] Error: ${err.message}`);
+        return { results: [], error: err.message };
     }
 }
 

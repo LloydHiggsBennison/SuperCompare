@@ -35,27 +35,24 @@ app.get('/api/search/:supermarket', async (req, res) => {
     
     if (!q) return res.status(400).json({ error: 'Query required' });
 
-    log(`[${supermarket.toUpperCase()}] Buscando: ${q}`);
-    
-    // Disable caching for API responses
-    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
-    res.setHeader('Pragma', 'no-cache');
-    res.setHeader('Expires', '0');
-
     try {
-        const results = await scrapers[supermarket](q);
-        res.json({
+        const { results, debug, error } = await scrapers[supermarket](q);
+        const responseData = {
             supermarket,
-            version: '1.0.8',
+            version: '1.0.9',
             timestamp: new Date().toISOString(),
             count: results.length,
-            results
-        });
+            results,
+            debug: debug || null,
+            error: error || null
+        };
+        
+        res.json(responseData);
     } catch (err) {
-        log(`[${supermarket.toUpperCase()}] Error: ${err.message}`);
+        log(`[${supermarket.toUpperCase()}] Crash: ${err.message}`);
         res.status(500).json({ 
             supermarket,
-            version: '1.0.8',
+            version: '1.0.9',
             error: err.message, 
             results: [] 
         });
@@ -137,7 +134,7 @@ app.get('/api/search', async (req, res) => {
     log(`\n✅ Total: ${allResults.length} resultados\n`);
     res.json({
         query: q,
-        version: '1.0.7',
+        version: '1.0.9',
         timestamp: new Date().toISOString(),
         count: allResults.length,
         summary: bySupermarket,

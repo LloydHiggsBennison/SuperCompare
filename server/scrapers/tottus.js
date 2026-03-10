@@ -85,11 +85,10 @@ async function scrapeTottus(query) {
         }
 
         log(`[Tottus] Encontrados ${products.length} resultados`);
-        return products;
-
-    } catch (error) {
-        log(`[Tottus] Error: ${error.message}`);
-        return [];
+        return { results: products.slice(0, 15) };
+    } catch (err) {
+        log(`[Tottus] Error: ${err.message}`);
+        return { results: [], error: err.message };
     }
 }
 

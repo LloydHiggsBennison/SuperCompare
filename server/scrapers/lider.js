@@ -110,7 +110,7 @@ async function scrapeLider(query) {
         // Method 1: API interception
         if (apiProducts.length > 0) {
             log(`[Líder] Encontrados ${apiProducts.length} productos (API)`);
-            return formatProducts(apiProducts);
+            return { results: formatProducts(apiProducts) };
         }
 
         // Method 2: __NEXT_DATA__ extraction
@@ -147,7 +147,7 @@ async function scrapeLider(query) {
 
         if (ssrProducts.length > 0) {
             log(`[Líder] Encontrados ${ssrProducts.length} productos (SSR)`);
-            return formatProducts(ssrProducts);
+            return { results: formatProducts(ssrProducts) };
         }
 
         // Method 3: DOM scraping
@@ -201,26 +201,20 @@ async function scrapeLider(query) {
             return results;
         });
 
-        if (domProducts.length > 0) {
+        const debugSample = await page.evaluate(() => document.body.innerText.slice(0, 500));
+
+        if (domProducts && domProducts.length > 0) {
             const formatted = formatProducts(domProducts);
             log(`[Líder] Encontrados ${formatted.length} productos (DOM)`);
-            if (formatted.length === 0) {
-                const sample = await page.evaluate(() => document.body.innerText.slice(0, 300));
-                log(`[Líder] 0 resultados después de formatear. Muestra de página: ${sample.replace(/\n/g, ' ')}`);
-            }
-            return formatted;
+            return { results: formatted, debug: debugSample };
         }
 
-        // Diagnostic log if 0 results
-        const pageSample = await page.evaluate(() => document.body.innerText.slice(0, 300));
-        log(`[Líder] 0 resultados. Muestra de página: ${pageSample.replace(/\n/g, ' ')}`);
-
-        log('[Líder] No se encontraron resultados (posible bot challenge)');
-        return [];
+        log(`[Líder] 0 resultados. Muestra: ${debugSample.replace(/\n/g, ' ')}`);
+        return { results: [], debug: debugSample };
 
     } catch (error) {
         log(`[Líder] Error: ${error.message}`);
-        return [];
+        return { results: [], debug: error.message };
     } finally {
         if (browser) await browser.close();
     }

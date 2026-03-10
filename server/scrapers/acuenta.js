@@ -146,16 +146,15 @@ async function scrapeAcuenta(query) {
             productUrl: p.url ? (p.url.startsWith('http') ? p.url : `https://www.acuenta.cl${p.url}`) : ''
         }));
 
-        log(`[Acuenta] Encontrados ${formatted.length} productos`);
-        if (formatted.length === 0) {
-            const sample = await page.evaluate(() => document.body.innerText.slice(0, 300));
-            log(`[Acuenta] 0 resultados. Muestra de página: ${sample.replace(/\n/g, ' ')}`);
-        }
-        return formatted;
+        const debug = formatted.length === 0 
+            ? await page.evaluate(() => document.body.innerText.slice(0, 500))
+            : null;
+
+        return { results: formatted, debug };
 
     } catch (error) {
         log(`[Acuenta] Error: ${error.message}`);
-        return [];
+        return { results: [], error: error.message };
     } finally {
         if (browser) await browser.close();
     }

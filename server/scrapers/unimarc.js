@@ -82,8 +82,18 @@ async function scrapeUnimarc(query) {
         return products;
 
     } catch (error) {
-        log(`[Unimarc] Error: ${error.message}`);
-        return [];
+        log(`[Unimarc] Error en performUnimarcSearch: ${error.message}`);
+        throw error; // Re-throw to be caught by scrapeUnimarc
+    }
+}
+
+async function scrapeUnimarc(query) {
+    try {
+        const results = await performUnimarcSearch(query);
+        return { results: results.slice(0, 15) };
+    } catch (err) {
+        log(`[Unimarc] Error: ${err.message}`);
+        return { results: [], error: err.message };
     }
 }
 

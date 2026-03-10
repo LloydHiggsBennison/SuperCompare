@@ -22,7 +22,7 @@ async function scrapeSantaIsabel(query) {
             sponsoredProducts: true
         }, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
                 'apikey': 'be-reg-groceries-sisa-catalog-wdhhq5a2fken',
@@ -31,7 +31,7 @@ async function scrapeSantaIsabel(query) {
                 'Origin': 'https://www.santaisabel.cl',
                 'Referer': 'https://www.santaisabel.cl/'
             },
-            timeout: 15000
+            timeout: 20000
         });
 
         const products = [];

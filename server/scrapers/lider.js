@@ -11,13 +11,14 @@ async function scrapeLider(query) {
 
     try {
         browser = await puppeteer.launch({
-            headless: 'new',
+            headless: true,
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
                 '--disable-dev-shm-usage',
                 '--disable-gpu',
-                '--disable-blink-features=AutomationControlled'
+                '--disable-blink-features=AutomationControlled',
+                '--window-size=1920,1080'
             ]
         });
 
@@ -64,21 +65,21 @@ async function scrapeLider(query) {
         });
 
         const url = `https://super.lider.cl/search?q=${encodeURIComponent(query)}`;
-        log(`[Líder] Navegando...`);
+        log(`[Líder] Navegando a: ${url}`);
 
         // Navigate with a generous timeout
-        const response = await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+        const response = await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
         
         // Check for bot challenge or redirect
         const currentUrl = page.url();
-        const wasBlocked = currentUrl.includes('/blocked') || currentUrl.includes('challenge');
+        log(`[Líder] URL actual: ${currentUrl}`);
         
-        if (wasBlocked) {
-            log('[Líder] Bot challenge detectado, esperando...');
+        if (currentUrl.includes('/blocked') || currentUrl.includes('challenge')) {
+            log('[Líder] ⚠️ Bloqueado por WAF/Bot detection. Reintentando...');
             // Wait for challenge to potentially resolve
-            await new Promise(r => setTimeout(r, 5000));
+            await new Promise(r => setTimeout(r, 2000));
             // Try to navigate again
-            await page.goto(url, { waitUntil: 'networkidle2', timeout: 25000 }).catch(() => {});
+            await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 60000 });
         }
 
         // Wait for any remaining requests

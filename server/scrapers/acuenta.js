@@ -11,13 +11,14 @@ async function scrapeAcuenta(query) {
 
     try {
         browser = await puppeteer.launch({
-            headless: 'new',
+            headless: true,
             args: [
                 '--no-sandbox',
                 '--disable-setuid-sandbox',
                 '--disable-dev-shm-usage',
                 '--disable-gpu',
-                '--disable-blink-features=AutomationControlled'
+                '--disable-blink-features=AutomationControlled',
+                '--window-size=1920,1080'
             ]
         });
 
@@ -31,11 +32,14 @@ async function scrapeAcuenta(query) {
         const url = `https://www.acuenta.cl/search?name=${encodeURIComponent(query)}`;
         log(`[Acuenta] Navegando: ${url}`);
 
-        await page.goto(url, { waitUntil: 'networkidle2', timeout: 30000 });
+        await page.goto(url, { waitUntil: 'networkidle2', timeout: 60000 });
         
         // Wait for products to render
-        await page.waitForSelector('a[href*="/p/"], [class*="product"], [class*="Product"]', { timeout: 10000 }).catch(() => {});
-        await new Promise(r => setTimeout(r, 3000));
+        log('[Acuenta] Esperando selector de productos...');
+        await page.waitForSelector('a[href*="/p/"], [class*="product"], [class*="Product"]', { timeout: 15000 }).catch(e => {
+            log(`[Acuenta] Timeout esperando selector: ${e.message}`);
+        });
+        await new Promise(r => setTimeout(r, 5000));
 
         // Extract products from DOM
         const products = await page.evaluate(() => {

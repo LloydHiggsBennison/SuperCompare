@@ -16,6 +16,7 @@ async function scrapeUnimarc(query) {
     try {
         const url = 'https://bff-unimarc-ecommerce.unimarc.cl/catalog/product/search';
 
+        log(`[Unimarc] Consultando API para: ${query}`);
         const { data } = await axios.post(url, {
             from: '0',
             orderBy: '',
@@ -25,7 +26,7 @@ async function scrapeUnimarc(query) {
             userTriggered: true
         }, {
             headers: {
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/142.0.0.0 Safari/537.36',
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36',
                 'Accept': 'application/json',
                 'Content-Type': 'application/json',
                 'channel': 'UNIMARC',
@@ -36,7 +37,7 @@ async function scrapeUnimarc(query) {
                 'Origin': 'https://www.unimarc.cl',
                 'Referer': 'https://www.unimarc.cl/'
             },
-            timeout: 15000
+            timeout: 20000
         });
 
         const products = [];

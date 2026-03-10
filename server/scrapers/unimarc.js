@@ -10,7 +10,7 @@ const parsePrice = (val) => {
     return match ? parseInt(match[0].replace(/\./g, '')) : 0;
 };
 
-async function scrapeUnimarc(query) {
+async function performUnimarcSearch(query) {
     log('[Unimarc] Iniciando (API BFF)...');
 
     try {

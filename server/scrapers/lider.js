@@ -17,22 +17,44 @@ async function scrapeLider(query) {
                 '--disable-setuid-sandbox',
                 '--disable-dev-shm-usage',
                 '--disable-gpu',
-                '--disable-blink-features=AutomationControlled',
-                '--window-size=1920,1080'
+                '--disable-web-security',
+                '--disable-features=IsolateOrigins,site-per-process',
+                '--js-flags="--max-old-space-size=256"', // Limit V8 memory
+                '--disable-extensions',
+                '--disable-component-update',
+                '--disable-background-networking',
+                '--disable-background-timer-throttling',
+                '--disable-backgrounding-occluded-windows',
+                '--disable-breakpad',
+                '--disable-client-side-phishing-detection',
+                '--disable-default-apps',
+                '--disable-hang-monitor',
+                '--disable-popup-blocking',
+                '--disable-prompt-on-repost',
+                '--disable-sync'
             ]
         });
 
         const page = await browser.newPage();
         
+        // Aggressive resource blocking to save memory
+        await page.setRequestInterception(true);
+        page.on('request', (req) => {
+            const type = req.resourceType();
+            const url = req.url().toLowerCase();
+            const blockedTypes = ['image', 'font', 'media', 'stylesheet', 'other'];
+            const blockedDomains = ['google-analytics', 'facebook', 'hotjar', 'doubleclick', 'analytics', 'bing', 'clarity'];
+
+            if (blockedTypes.includes(type) || blockedDomains.some(d => url.includes(d))) {
+                req.abort();
+            } else {
+                req.continue();
+            }
+        });
+
         // Use realistic headers
         await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36');
-        await page.setViewport({ width: 1366, height: 768 });
-        await page.setExtraHTTPHeaders({
-            'Accept-Language': 'es-CL,es;q=0.9,en;q=0.8',
-            'sec-ch-ua': '"Google Chrome";v="131", "Chromium";v="131", "Not_A Brand";v="24"',
-            'sec-ch-ua-mobile': '?0',
-            'sec-ch-ua-platform': '"Windows"'
-        });
+        await page.setViewport({ width: 1280, height: 720 });
 
         // Set critical cookies before navigation
         await page.setCookie(

@@ -17,17 +17,27 @@ async function scrapeAcuenta(query) {
                 '--disable-setuid-sandbox',
                 '--disable-dev-shm-usage',
                 '--disable-gpu',
-                '--disable-blink-features=AutomationControlled',
-                '--window-size=1920,1080'
+                '--disable-web-security',
+                '--disable-features=IsolateOrigins,site-per-process',
+                '--js-flags="--max-old-space-size=256"',
+                '--disable-extensions',
+                '--disable-sync'
             ]
         });
 
         const page = await browser.newPage();
-        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36');
-        await page.setViewport({ width: 1366, height: 768 });
-        await page.setExtraHTTPHeaders({
-            'Accept-Language': 'es-CL,es;q=0.9,en;q=0.8'
+        
+        // Resource blocking
+        await page.setRequestInterception(true);
+        page.on('request', (req) => {
+            const type = req.resourceType();
+            const blocked = ['image', 'font', 'media', 'other'];
+            if (blocked.includes(type)) req.abort();
+            else req.continue();
         });
+
+        await page.setUserAgent('Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36');
+        await page.setViewport({ width: 1280, height: 720 });
 
         const url = `https://www.acuenta.cl/search?name=${encodeURIComponent(query)}`;
         log(`[Acuenta] Navegando: ${url}`);

@@ -125,7 +125,7 @@ app.get('/api/search', async (req, res) => {
     log(`\n✅ Total: ${allResults.length} resultados\n`);
     res.json({
         query: q,
-        version: '1.0.5',
+        version: '1.0.7',
         timestamp: new Date().toISOString(),
         count: allResults.length,
         summary: bySupermarket,

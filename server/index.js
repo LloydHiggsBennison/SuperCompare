@@ -65,7 +65,14 @@ app.get('/api/search', async (req, res) => {
     });
 
     log(`\n✅ Total: ${allResults.length} resultados\n`);
-    res.json(allResults);
+    res.json({
+        query: q,
+        version: '1.0.4',
+        timestamp: new Date().toISOString(),
+        count: allResults.length,
+        summary: bySupermarket,
+        results: allResults
+    });
 });
 
 // Health check endpoint

@@ -24,6 +24,16 @@ const scrapers = {
     acuenta: scrapeAcuenta
 };
 
+app.get('/api/health', (req, res) => {
+    res.json({
+        status: 'ok',
+        version: '1.1.0',
+        timestamp: new Date().toISOString(),
+        node: process.version,
+        env: process.env.NODE_ENV || 'production'
+    });
+});
+
 // Per-supermarket search endpoint
 app.get('/api/search/:supermarket', async (req, res) => {
     const { supermarket } = req.params;
@@ -35,24 +45,34 @@ app.get('/api/search/:supermarket', async (req, res) => {
     
     if (!q) return res.status(400).json({ error: 'Query required' });
 
+    log(`[${supermarket.toUpperCase()}] Buscando: ${q}`);
+    
+    // Disable caching for API responses
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
     try {
-        const { results, debug, error } = await scrapers[supermarket](q);
-        const responseData = {
+        const resultPayload = await scrapers[supermarket](q);
+        // Normalize result (handle both old array and new object structure for safety)
+        const results = Array.isArray(resultPayload) ? resultPayload : (resultPayload.results || []);
+        const debug = resultPayload.debug || null;
+        const error = resultPayload.error || null;
+
+        res.json({
             supermarket,
-            version: '1.0.9',
+            version: '1.1.0',
             timestamp: new Date().toISOString(),
             count: results.length,
             results,
-            debug: debug || null,
-            error: error || null
-        };
-        
-        res.json(responseData);
+            debug,
+            error
+        });
     } catch (err) {
         log(`[${supermarket.toUpperCase()}] Crash: ${err.message}`);
         res.status(500).json({ 
             supermarket,
-            version: '1.0.9',
+            version: '1.1.0',
             error: err.message, 
             results: [] 
         });
@@ -134,7 +154,7 @@ app.get('/api/search', async (req, res) => {
     log(`\n✅ Total: ${allResults.length} resultados\n`);
     res.json({
         query: q,
-        version: '1.0.9',
+        version: '1.1.0',
         timestamp: new Date().toISOString(),
         count: allResults.length,
         summary: bySupermarket,

@@ -22,7 +22,9 @@ function App() {
         setFilters({ supermarkets: new Set(), brands: new Set() });
         try {
             const data = await searchProducts(searchQuery);
-            setResults(data);
+            // Handle both plain array and structured response
+            const products = Array.isArray(data) ? data : (data.results || []);
+            setResults(products);
         } catch (err) {
             setError('No se pudo conectar con el servidor. Asegúrate de que el backend esté corriendo.');
             setResults([]);

@@ -4,7 +4,7 @@ import SearchBar from './components/SearchBar';
 import ProductCard from './components/ProductCard';
 import LoadingModal from './components/LoadingModal';
 import FilterSidebar from './components/FilterSidebar';
-import { searchProducts } from './services/api';
+import { searchStore } from './services/api';
 
 function App() {
     const [query, setQuery] = useState('');
@@ -12,6 +12,7 @@ function App() {
     const [loading, setLoading] = useState(false);
     const [hasSearched, setHasSearched] = useState(false);
     const [error, setError] = useState(null);
+    const [progress, setProgress] = useState({});
     const [filters, setFilters] = useState({ supermarkets: new Set(), brands: new Set() });
     const [showMobileFilters, setShowMobileFilters] = useState(false);
 
@@ -19,24 +20,33 @@ function App() {
         setLoading(true);
         setError(null);
         setHasSearched(true);
+        setResults([]);
         setFilters({ supermarkets: new Set(), brands: new Set() });
-        try {
-            const data = await searchProducts(searchQuery);
-            // Handle both plain array and structured response
-            const products = Array.isArray(data) ? data : (data.results || []);
-            setResults(products);
-            
-            // Handle partial errors
-            if (!Array.isArray(data) && data.errors && Object.keys(data.errors).length > 0) {
-                const failedStores = Object.keys(data.errors).join(', ');
-                setError(`Aviso: Algunos supermercados no respondieron (${failedStores}). El resto de resultados se muestra abajo.`);
+        
+        const stores = ['Unimarc', 'Santa Isabel', 'Tottus', 'Líder', 'Acuenta'];
+        const initialProgress = {};
+        stores.forEach(s => initialProgress[s] = 'pending');
+        setProgress(initialProgress);
+
+        for (const store of stores) {
+            setProgress(prev => ({ ...prev, [store]: 'loading' }));
+            try {
+                const data = await searchStore(store, searchQuery);
+                const newProducts = data.results || [];
+                
+                setResults(prev => {
+                    const combined = [...prev, ...newProducts];
+                    return combined.sort((a, b) => a.price - b.price);
+                });
+                
+                setProgress(prev => ({ ...prev, [store]: 'done' }));
+            } catch (err) {
+                console.error(`Error buscando en ${store}:`, err);
+                setProgress(prev => ({ ...prev, [store]: 'error' }));
             }
-        } catch (err) {
-            setError('No se pudo conectar con el servidor. Asegúrate de que el backend esté corriendo.');
-            setResults([]);
-        } finally {
-            setLoading(false);
         }
+        
+        setLoading(false);
     };
 
     // Filter results
@@ -69,7 +79,7 @@ function App() {
                 pointerEvents: 'none'
             }}></div>
 
-            <LoadingModal isOpen={loading} />
+            <LoadingModal isOpen={loading} progress={progress} />
 
             {/* Header */}
             <header style={{ paddingTop: '48px', paddingBottom: '12px', textAlign: 'center' }}>

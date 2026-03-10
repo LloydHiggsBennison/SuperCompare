@@ -16,7 +16,6 @@ app.use(express.json());
 
 const log = (message) => console.log(message);
 
-// Scrapers object for easy management
 const scrapers = {
     lider: scrapeLider,
     unimarc: scrapeUnimarc,
@@ -24,6 +23,32 @@ const scrapers = {
     tottus: scrapeTottus,
     acuenta: scrapeAcuenta
 };
+
+// Per-supermarket search endpoint
+app.get('/api/search/:supermarket', async (req, res) => {
+    const { supermarket } = req.params;
+    const { q } = req.query;
+    
+    if (!scrapers[supermarket]) {
+        return res.status(404).json({ error: 'Supermarket not found' });
+    }
+    
+    if (!q) return res.status(400).json({ error: 'Query required' });
+
+    log(`[${supermarket.toUpperCase()}] Buscando: ${q}`);
+    
+    try {
+        const results = await scrapers[supermarket](q);
+        res.json({
+            supermarket,
+            count: results.length,
+            results
+        });
+    } catch (err) {
+        log(`[${supermarket.toUpperCase()}] Error: ${err.message}`);
+        res.status(500).json({ error: err.message, results: [] });
+    }
+});
 
 // Main search endpoint
 app.get('/api/search', async (req, res) => {

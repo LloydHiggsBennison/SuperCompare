@@ -25,6 +25,12 @@ function App() {
             // Handle both plain array and structured response
             const products = Array.isArray(data) ? data : (data.results || []);
             setResults(products);
+            
+            // Handle partial errors
+            if (!Array.isArray(data) && data.errors && Object.keys(data.errors).length > 0) {
+                const failedStores = Object.keys(data.errors).join(', ');
+                setError(`Aviso: Algunos supermercados no respondieron (${failedStores}). El resto de resultados se muestra abajo.`);
+            }
         } catch (err) {
             setError('No se pudo conectar con el servidor. Asegúrate de que el backend esté corriendo.');
             setResults([]);

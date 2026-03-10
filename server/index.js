@@ -31,25 +31,55 @@ app.get('/api/search', async (req, res) => {
     if (!q) return res.status(400).json({ error: 'Query required' });
 
     log(`\n🔍 Buscando: ${q}`);
-    log('\nConsultando: Líder, Unimarc, Santa Isabel, Tottus, Acuenta\n');
+    log('Consultando: Líder, Unimarc, Santa Isabel, Tottus, Acuenta (Optimizado para Memoria)\n');
 
-    // Run all scrapers in parallel
-    const scraperNames = Object.keys(scrapers);
-    const promiseResults = await Promise.allSettled(Object.values(scrapers).map(scraper => scraper(q)));
+    const resultsByScraper = {};
+    const errors = {};
 
-    // Process results with detailed logging
-    const allResults = promiseResults
-        .map((p, index) => {
-            const scraperName = scraperNames[index];
-            if (p.status === 'fulfilled') {
-                const count = p.value.length;
-                log(`✅ ${scraperName}: ${count} productos`);
-                return p.value;
-            } else {
-                log(`❌ ${scraperName} falló: ${p.reason?.message || 'Error desconocido'}`);
-                return [];
-            }
+    // 1. Light scrapers (API-based) - Run in parallel
+    const lightScrapers = {
+        santaisabel: scrapeSantaIsabel,
+        tottus: scrapeTottus,
+        unimarc: scrapeUnimarc
+    };
+
+    const lightPromiseResults = await Promise.allSettled(
+        Object.entries(lightScrapers).map(async ([name, scraper]) => {
+            const res = await scraper(q);
+            return { name, data: res };
         })
+    );
+
+    lightPromiseResults.forEach(p => {
+        if (p.status === 'fulfilled') {
+            resultsByScraper[p.value.name] = p.value.data;
+            log(`✅ ${p.value.name}: ${p.value.data.length} productos`);
+        } else {
+            const name = scraperNames.find(n => lightScrapers[n]) || 'unknown';
+            errors[name] = p.reason?.message || 'Error desconocido';
+            log(`❌ ${name} falló: ${errors[name]}`);
+        }
+    });
+
+    // 2. Heavy scrapers (Puppeteer-based) - Run sequentially to save memory
+    const heavyScrapers = [
+        { name: 'lider', scraper: scrapeLider },
+        { name: 'acuenta', scraper: scrapeAcuenta }
+    ];
+
+    for (const { name, scraper } of heavyScrapers) {
+        try {
+            const data = await scraper(q);
+            resultsByScraper[name] = data;
+            log(`✅ ${name}: ${data.length} productos`);
+        } catch (err) {
+            errors[name] = err.message || 'Error en Puppeteer';
+            log(`❌ ${name} falló: ${errors[name]}`);
+            resultsByScraper[name] = [];
+        }
+    }
+
+    const allResults = Object.values(resultsByScraper)
         .flat()
         .sort((a, b) => a.price - b.price);
 
@@ -59,18 +89,22 @@ app.get('/api/search', async (req, res) => {
         bySupermarket[product.supermarketName] = (bySupermarket[product.supermarketName] || 0) + 1;
     });
 
-    log('\n📊 Productos por supermercado:');
+    log('\n📊 Resumen de búsqueda:');
     Object.entries(bySupermarket).forEach(([name, count]) => {
         log(`   ${name}: ${count}`);
     });
+    if (Object.keys(errors).length > 0) {
+        log('⚠️ Errores detectados en:', Object.keys(errors).join(', '));
+    }
 
     log(`\n✅ Total: ${allResults.length} resultados\n`);
     res.json({
         query: q,
-        version: '1.0.4',
+        version: '1.0.5',
         timestamp: new Date().toISOString(),
         count: allResults.length,
         summary: bySupermarket,
+        errors,
         results: allResults
     });
 });

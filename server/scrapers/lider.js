@@ -202,9 +202,18 @@ async function scrapeLider(query) {
         });
 
         if (domProducts.length > 0) {
-            log(`[Líder] Encontrados ${domProducts.length} productos (DOM)`);
-            return formatProducts(domProducts);
+            const formatted = formatProducts(domProducts);
+            log(`[Líder] Encontrados ${formatted.length} productos (DOM)`);
+            if (formatted.length === 0) {
+                const sample = await page.evaluate(() => document.body.innerText.slice(0, 300));
+                log(`[Líder] 0 resultados después de formatear. Muestra de página: ${sample.replace(/\n/g, ' ')}`);
+            }
+            return formatted;
         }
+
+        // Diagnostic log if 0 results
+        const pageSample = await page.evaluate(() => document.body.innerText.slice(0, 300));
+        log(`[Líder] 0 resultados. Muestra de página: ${pageSample.replace(/\n/g, ' ')}`);
 
         log('[Líder] No se encontraron resultados (posible bot challenge)');
         return [];

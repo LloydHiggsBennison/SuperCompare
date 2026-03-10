@@ -147,6 +147,10 @@ async function scrapeAcuenta(query) {
         }));
 
         log(`[Acuenta] Encontrados ${formatted.length} productos`);
+        if (formatted.length === 0) {
+            const sample = await page.evaluate(() => document.body.innerText.slice(0, 300));
+            log(`[Acuenta] 0 resultados. Muestra de página: ${sample.replace(/\n/g, ' ')}`);
+        }
         return formatted;
 
     } catch (error) {

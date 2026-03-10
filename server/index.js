@@ -37,16 +37,28 @@ app.get('/api/search/:supermarket', async (req, res) => {
 
     log(`[${supermarket.toUpperCase()}] Buscando: ${q}`);
     
+    // Disable caching for API responses
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
+    res.setHeader('Pragma', 'no-cache');
+    res.setHeader('Expires', '0');
+
     try {
         const results = await scrapers[supermarket](q);
         res.json({
             supermarket,
+            version: '1.0.8',
+            timestamp: new Date().toISOString(),
             count: results.length,
             results
         });
     } catch (err) {
         log(`[${supermarket.toUpperCase()}] Error: ${err.message}`);
-        res.status(500).json({ error: err.message, results: [] });
+        res.status(500).json({ 
+            supermarket,
+            version: '1.0.8',
+            error: err.message, 
+            results: [] 
+        });
     }
 });
 
